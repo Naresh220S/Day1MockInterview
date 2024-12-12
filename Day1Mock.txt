@@ -1,9 +1,9 @@
-## 1. What will happen if you do Git Fetch?
-* Sure, let's go through a practical example to understand what happens when you run `git fetch`.
+1. What will happen if you do Git Fetch?
+. Sure, let's go through a practical example to understand what happens when you run `git fetch`.
 
-### Practical Example:
+Practical Example:
 
-* 1. **Initial Setup:**
+**Initial Setup:**
    - You have a local Git repository cloned from a remote repository.
    - Your current branch is `main`.
 
@@ -11,7 +11,7 @@
    - The remote repository has a `main` branch and a `feature-branch`.
    - The remote repository has new commits on both `main` and `feature-branch` that your local repository doesn't have yet.
 
-### Step-by-Step Process:
+ Step-by-Step Process:
 
 * 1. **Clone the Remote Repository:**
 
