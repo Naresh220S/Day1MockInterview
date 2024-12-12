@@ -1,0 +1,937 @@
+## 1. What will happen if you do Git Fetch?
+* Sure, let's go through a practical example to understand what happens when you run `git fetch`.
+
+### Practical Example:
+
+* 1. **Initial Setup:**
+   - You have a local Git repository cloned from a remote repository.
+   - Your current branch is `main`.
+
+* 2. **Remote Repository State:**
+   - The remote repository has a `main` branch and a `feature-branch`.
+   - The remote repository has new commits on both `main` and `feature-branch` that your local repository doesn't have yet.
+
+### Step-by-Step Process:
+
+* 1. **Clone the Remote Repository:**
+
+   ```sh
+   git clone https://github.com/example/repo.git
+   cd repo
+   ```
+
+  * Now, you have a local copy of the repository with the `main` branch checked out.
+
+* 2. **Make Local Changes (Optional):**
+
+   ```sh
+   echo "Local change" >> file.txt
+   git add file.txt
+   git commit -m "Local changes"
+   ```
+
+  * You now have unpushed local changes in your `main` branch.
+
+* 3. **Remote Changes Occur:**
+   - Suppose a teammate has pushed new commits to `main` and `feature-branch` on the remote repository.
+
+* 4. **Run `git fetch`:**
+
+   ```sh
+   git fetch
+   ```
+
+  * Here’s what happens:
+
+   - Git contacts the remote repository and downloads the latest changes.
+   - Your local repository’s remote-tracking branches are updated.
+     - `origin/main` is updated with the latest commits from the remote `main` branch.
+     - `origin/feature-branch` is updated with the latest commits from the remote `feature-branch`.
+
+* 5. **Check Remote-Tracking Branches:**
+
+   ```sh
+   git branch -r
+   ```
+
+  * This lists the remote-tracking branches, and you’ll see:
+
+   ```
+   origin/HEAD -> origin/main
+   origin/main
+   origin/feature-branch
+   ```
+
+* 6. **View Differences:**
+   You can view the differences between your local branch and the remote-tracking branch.
+
+   ```sh
+   git log main..origin/main
+   ```
+
+  * This shows the commits that are in `origin/main` but not in your local `main`.
+
+* 7. **Decide to Merge or Rebase:**
+  * You can now choose to incorporate the fetched changes into your local branch.
+
+   - **Merge:**
+
+     ```sh
+     git merge origin/main
+     ```
+
+   - **Rebase:**
+
+     ```sh
+     git rebase origin/main
+     ```
+
+### Summary:
+- **Before `git fetch`**: Your local repository does not have the latest commits from the remote repository.
+- **After `git fetch`**: Your local repository’s remote-tracking branches are updated with the latest commits from the remote repository. Your working directory and current branch remain unchanged until you decide to merge or rebase the changes.
+
+* Running `git fetch` ensures you have the latest information from the remote repository, allowing you to review and incorporate changes as needed without altering your current working state.
+
+
+## 2. What is the difference b/w continuous delivery & deployment
+
+### Continuous Delivery (CD) vs. Continuous Deployment (CD)
+
+**Continuous Delivery** and **Continuous Deployment** are practices in software development that automate the delivery pipeline, but they differ in how far the automation goes and how code changes are deployed to production.
+
+### Continuous Delivery
+
+**Continuous Delivery** is a software development practice where code changes are automatically built, tested, and prepared for release to production. It ensures that the software can be released at any time, but the actual release to production is a manual decision.
+
+#### Key Characteristics:
+- **Automated Testing and Building**: Every change is automatically tested and built.
+- **Staging Environment**: Changes are deployed to a staging environment for further testing.
+- **Manual Deployment to Production**: The decision to deploy to production is made manually.
+
+#### Practical Example:
+
+* 1. **Code Change**: A developer pushes a new feature to the repository.
+* 2. **Automated Pipeline**:
+   - The pipeline automatically runs unit tests, integration tests, and end-to-end tests.
+   - The code is built and packaged.
+   - The application is deployed to a staging environment.
+* 3. **Manual Approval**:
+   - QA engineers or product managers test the feature in the staging environment.
+   - Once approved, the team decides to deploy to production.
+* 4. **Deployment to Production**: The team manually triggers the deployment to production.
+
+**Example Scenario**:
+- A company developing a web application uses Jenkins for their CI/CD pipeline.
+- After every commit to the `main` branch, Jenkins runs the tests, builds the application, and deploys it to a staging environment.
+- Once the QA team verifies the changes in staging, a product manager approves the release, and Jenkins deploys the application to production.
+
+### Continuous Deployment
+
+**Continuous Deployment** takes Continuous Delivery a step further by automating the entire release process. Every code change that passes the automated tests is automatically deployed to production without manual intervention.
+
+#### Key Characteristics:
+- **Automated Testing and Building**: Every change is automatically tested and built.
+- **No Manual Approval**: Changes that pass all tests are automatically deployed to production.
+- **Rapid Release**: Enables frequent and rapid deployment of new features and fixes.
+
+#### Practical Example:
+
+* 1. **Code Change**: A developer pushes a bug fix to the repository.
+* 2. **Automated Pipeline**:
+   - The pipeline automatically runs unit tests, integration tests, and end-to-end tests.
+   - The code is built and packaged.
+   - The application is automatically deployed to production if all tests pass.
+* 3. **Monitoring**: Automated monitoring and alerting tools check the health of the application post-deployment.
+
+**Example Scenario**:
+- An e-commerce company uses GitLab CI/CD for their pipeline.
+- After every commit to the `main` branch, GitLab CI/CD runs the tests, builds the application, and automatically deploys it to production.
+- The team uses monitoring tools like Prometheus and Grafana to ensure the application runs smoothly and to detect any issues immediately after deployment.
+
+### Summary:
+
+- **Continuous Delivery** ensures that your code is always in a deployable state and automates the deployment process up to a staging environment. Deployment to production requires manual approval.
+- **Continuous Deployment** automates the entire process, including deployment to production, ensuring that every change that passes automated tests is immediately deployed.
+
+**Choosing between the two** depends on factors like your team's maturity, the criticality of your application, and the need for manual oversight before releasing changes to users.
+
+
+## 3. How to run a particular stage in Jenkins Pipeline?
+
+* Running a particular stage in a Jenkins Pipeline can be accomplished using the `when` directive, environment variables, or parameters to control the flow. This is particularly useful for testing specific parts of the pipeline without running the entire process. Here's a practical example to illustrate this concept.
+
+### Example Scenario:
+* You have a Jenkins Pipeline with the following stages:
+    * 1. **Build**
+    * 2. **Test**
+    * 3. **Deploy**
+
+* You want to be able to run just the "Test" stage without executing the "Build" or "Deploy" stages.
+
+### Solution:
+* Use parameters and the `when` directive to control which stages to run.
+
+### Step-by-Step Process:
+
+* 1. **Define a Parameter**:
+   - Add a boolean parameter to your Jenkins job to control the stages.
+
+* 2. **Modify the Jenkinsfile**:
+   - Use the `when` directive to conditionally execute stages based on the parameter.
+
+### Jenkinsfile Example:
+
+```groovy
+pipeline {
+    agent any
+    parameters {
+        booleanParam(name: 'RUN_BUILD', defaultValue: true, description: 'Run Build Stage')
+        booleanParam(name: 'RUN_TEST', defaultValue: true, description: 'Run Test Stage')
+        booleanParam(name: 'RUN_DEPLOY', defaultValue: true, description: 'Run Deploy Stage')
+    }
+    stages {
+        stage('Build') {
+            when {
+                expression { return params.RUN_BUILD }
+            }
+            steps {
+                echo 'Building...'
+                // Add build steps here
+            }
+        }
+        stage('Test') {
+            when {
+                expression { return params.RUN_TEST }
+            }
+            steps {
+                echo 'Testing...'
+                // Add test steps here
+            }
+        }
+        stage('Deploy') {
+            when {
+                expression { return params.RUN_DEPLOY }
+            }
+            steps {
+                echo 'Deploying...'
+                // Add deploy steps here
+            }
+        }
+    }
+}
+```
+
+### How to Run a Specific Stage:
+
+* 1. **Navigate to Your Jenkins Job**:
+   - Open your Jenkins job in the Jenkins dashboard.
+
+* 2. **Build with Parameters**:
+   - Click on "Build with Parameters".
+   - You will see the parameters `RUN_BUILD`, `RUN_TEST`, and `RUN_DEPLOY`.
+
+* 3. **Select the Desired Stage**:
+   - To run only the "Test" stage, uncheck `RUN_BUILD` and `RUN_DEPLOY`, leaving `RUN_TEST` checked.
+
+* 4. **Trigger the Build**:
+   - Click "Build". Jenkins will execute the pipeline and run only the stages that match the specified conditions.
+
+### Practical Use Case:
+
+* Suppose you are working on improving the test suite and you need to frequently run just the "Test" stage to validate your changes. Instead of running the entire pipeline, you can:
+
+   * 1. Navigate to your Jenkins job.
+   * 2. Click "Build with Parameters".
+   * 3. Uncheck `RUN_BUILD` and `RUN_DEPLOY`.
+   * 4. Check `RUN_TEST`.
+   * 5. Trigger the build.
+
+* This setup saves time and resources by running only the necessary stages.
+
+### Summary:
+* By using parameters and the `when` directive in your Jenkinsfile, you can control the execution of specific stages in your pipeline. This approach allows for more flexibility and efficiency, especially when you need to test or debug individual stages without running the entire pipeline.
+
+## 4. What is a Docker Home Directory?
+
+* The term "Docker Home Directory" can refer to a couple of different things, depending on the context:
+
+### 1. Docker's Configuration and Storage Directory:
+* This is the directory where Docker stores its configuration files, images, containers, volumes, and other data. By default, this directory is located at `/var/lib/docker` on most Linux distributions.
+
+#### Key Components:
+- **Images**: Stored in `/var/lib/docker/image`.
+- **Containers**: Stored in `/var/lib/docker/containers`.
+- **Volumes**: Stored in `/var/lib/docker/volumes`.
+- **Networks**: Stored in `/var/lib/docker/network`.
+
+#### Example:
+* To check the size of the Docker storage directory:
+
+```sh
+du -sh /var/lib/docker
+```
+
+* You can change the default storage location by modifying the Docker daemon configuration file (usually `/etc/docker/daemon.json`) and adding the `data-root` key:
+
+```json
+{
+  "data-root": "/new/path/to/docker-data"
+}
+```
+
+* After modifying this file, you need to restart the Docker service:
+
+```sh
+sudo systemctl restart docker
+```
+
+### 2. User's Home Directory Inside a Docker Container:
+* When you create a Docker container, it typically has a default user and a corresponding home directory. For instance, when you create a container from the Ubuntu image, the default user is `root`, and the home directory is `/root`.
+
+#### Example:
+* Running a command to display the home directory inside a container:
+
+```sh
+docker run ubuntu bash -c 'echo $HOME'
+```
+
+* This command will output `/root` because the default user is `root`.
+
+* You can also specify a different user when running a container and set a custom home directory. For example:
+
+```Dockerfile
+# Dockerfile
+FROM ubuntu:latest
+RUN useradd -ms /bin/bash newuser
+USER newuser
+WORKDIR /home/newuser
+```
+
+* Building and running this Dockerfile:
+
+```sh
+docker build -t custom-user-container .
+docker run custom-user-container bash -c 'echo $HOME'
+```
+
+* This will output `/home/newuser` since we have created a new user `newuser` with `/home/newuser` as the home directory.
+
+### Summary:
+- **Docker Configuration and Storage Directory**: By default, located at `/var/lib/docker` on Linux systems, where Docker stores its images, containers, volumes, and network data.
+- **User's Home Directory Inside a Docker Container**: Depends on the user specified in the Dockerfile or the `docker run` command, with the default being `/root` for the `root` user.
+
+## 5. How you will integrate a docker server in jenkins?
+
+### Solution 1: 
+* Integrating a Docker server in Jenkins involves setting up Jenkins to build, run, and manage Docker containers as part of your CI/CD pipeline. Here's a step-by-step guide to achieve this:
+
+### Step 1: Install Docker on the Jenkins Server
+
+* 1. **Install Docker**:
+   - If Docker is not already installed on the Jenkins server, install it by following the official Docker installation guide for your OS.
+
+   ```sh
+   sudo apt-get update
+   sudo apt-get install -y docker.io
+   ```
+
+* 2. **Add Jenkins User to Docker Group**:
+   - Add the Jenkins user to the Docker group to allow Jenkins to run Docker commands without needing sudo.
+
+   ```sh
+   sudo usermod -aG docker jenkins
+   ```
+
+* 3. **Restart Jenkins**:
+   - Restart Jenkins to apply the group changes.
+
+   ```sh
+   sudo systemctl restart jenkins
+   ```
+
+### Step 2: Install Docker Plugin in Jenkins
+
+* 1. **Login to Jenkins**:
+   - Open your Jenkins dashboard in a web browser.
+
+* 2. **Install Docker Plugin**:
+   - Navigate to `Manage Jenkins` -> `Manage Plugins`.
+   - Go to the `Available` tab and search for "Docker".
+   - Select and install the "Docker" and "Docker Pipeline" plugins.
+   - Restart Jenkins if prompted.
+
+### Step 3: Configure Docker in Jenkins
+
+* 1. **Add Docker Host Configuration**:
+   - Go to `Manage Jenkins` -> `Configure System`.
+   - Scroll down to the `Cloud` section and click `Add a new cloud` -> `Docker`.
+
+* 2. **Configure Docker Host**:
+   - In the Docker Cloud configuration:
+     - Set `Name` to something like "Docker".
+     - For `Docker Host URI`, use `unix:///var/run/docker.sock` for a local Docker daemon or `tcp://<DOCKER_HOST>:<DOCKER_PORT>` for a remote daemon.
+     - Test the connection to ensure Jenkins can communicate with the Docker daemon.
+
+### Step 4: Create a Jenkins Pipeline with Docker
+
+* 1. **Create a New Pipeline Job**:
+   - Go to `New Item` -> `Pipeline`, enter a name, and click `OK`.
+
+* 2. **Configure Pipeline Script**:
+   - In the Pipeline section, choose `Pipeline script` and define your pipeline. Here’s an example Jenkinsfile that uses Docker:
+
+```groovy
+pipeline {
+    agent {
+        docker { image 'node:14-alpine' }
+    }
+    stages {
+        stage('Build') {
+            steps {
+                sh 'node --version'
+                sh 'npm --version'
+                // Add build steps here
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'npm install'
+                sh 'npm test'
+                // Add test steps here
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'echo Deploying...'
+                // Add deploy steps here
+            }
+        }
+    }
+}
+```
+
+* This example uses a `node:14-alpine` Docker image to run build, test, and deploy steps inside a container.
+
+* 3. **Save and Run the Pipeline**:
+   - Save the pipeline configuration and run the job.
+   - Jenkins will pull the specified Docker image, run the defined stages inside a container, and provide output logs in the console.
+
+### Additional Tips:
+
+- **Docker-in-Docker (DinD)**: If you need to build Docker images within the Jenkins pipeline, you might need to use Docker-in-Docker or a similar setup.
+- **Credentials Management**: Use Jenkins credentials management for securely storing and using Docker Hub credentials if you need to pull/push images from/to a Docker registry.
+- **Docker Compose**: For more complex setups, consider using Docker Compose within your Jenkins pipeline.
+
+### Example: Building and Pushing a Docker Image
+
+* Here’s a more advanced example Jenkinsfile that builds a Docker image and pushes it to Docker Hub:
+
+```groovy
+pipeline {
+    agent any
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+    }
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    docker.build('myapp:latest')
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'docker run myapp:latest ./run-tests.sh'
+            }
+        }
+        stage('Push') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'DOCKERHUB_CREDENTIALS') {
+                        docker.image('myapp:latest').push('latest')
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+* In this example, replace `'dockerhub-credentials'` with the ID of your Docker Hub credentials stored in Jenkins.
+
+* By following these steps, you can integrate a Docker server with Jenkins and create pipelines that leverage Docker containers for building, testing, and deploying applications.
+
+## Solution 2:
+
+* Sure! Including Docker as a Jenkins agent (or slave) allows Jenkins to utilize Docker containers as ephemeral build environments, which can be particularly useful for isolating builds and managing dependencies. Here's how you can set up and use Docker containers as Jenkins agents.
+
+### Step-by-Step Process to Use Docker as a Jenkins Agent
+
+### Step 1: Install Docker on the Jenkins Server
+* Ensure Docker is installed and configured on your Jenkins server.
+
+```sh
+sudo apt-get update
+sudo apt-get install -y docker.io
+sudo usermod -aG docker jenkins
+sudo systemctl restart jenkins
+```
+
+### Step 2: Install Docker and Docker Pipeline Plugins in Jenkins
+
+* 1. **Login to Jenkins**:
+   - Open your Jenkins dashboard in a web browser.
+
+* 2. **Install Docker Plugin**:
+   - Navigate to `Manage Jenkins` -> `Manage Plugins`.
+   - Go to the `Available` tab and search for "Docker".
+   - Select and install the "Docker" and "Docker Pipeline" plugins.
+   - Restart Jenkins if prompted.
+
+### Step 3: Configure Docker in Jenkins
+
+* 1. **Add Docker Host Configuration**:
+   - Go to `Manage Jenkins` -> `Configure System`.
+   - Scroll down to the `Cloud` section and click `Add a new cloud` -> `Docker`.
+
+* 2. **Configure Docker Host**:
+   - In the Docker Cloud configuration:
+     - Set `Name` to something like "Docker".
+     - For `Docker Host URI`, use `unix:///var/run/docker.sock` for a local Docker daemon or `tcp://<DOCKER_HOST>:<DOCKER_PORT>` for a remote daemon.
+     - Test the connection to ensure Jenkins can communicate with the Docker daemon.
+
+### Step 4: Configure Jenkins to Use Docker Containers as Agents
+
+* 1. **Go to Manage Nodes and Clouds**:
+   - Navigate to `Manage Jenkins` -> `Manage Nodes and Clouds`.
+
+* 2. **Add a New Docker Agent Template**:
+   - Click on `Configure Clouds` and then `Add Docker Template`.
+   - Configure the template with the following details:
+     - **Labels**: Give the agent a label, e.g., `docker-agent`.
+     - **Name**: Set a name for the template.
+     - **Docker Image**: Specify the Docker image to be used as an agent, e.g., `jenkins/inbound-agent`.
+
+* 3. **Advanced Configuration**:
+   - Configure other advanced options such as Docker command, volumes, and environment variables as needed.
+
+### Step 5: Create a Jenkins Pipeline Using the Docker Agent
+
+* 1. **Create a New Pipeline Job**:
+   - Go to `New Item` -> `Pipeline`, enter a name, and click `OK`.
+
+* 2. **Configure Pipeline Script**:
+   - In the Pipeline section, choose `Pipeline script` and define your pipeline. Here’s an example Jenkinsfile that uses a Docker agent:
+
+```groovy
+pipeline {
+    agent {
+        docker {
+            label 'docker-agent'
+            image 'node:14-alpine'
+            args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket if needed
+        }
+    }
+    stages {
+        stage('Build') {
+            steps {
+                sh 'node --version'
+                sh 'npm --version'
+                // Add build steps here
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'npm install'
+                sh 'npm test'
+                // Add test steps here
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'echo Deploying...'
+                // Add deploy steps here
+            }
+        }
+    }
+}
+```
+
+### Summary
+
+* By following these steps, you can integrate Docker as a Jenkins agent, allowing you to run your Jenkins jobs inside Docker containers. This setup provides several benefits:
+
+* 1. **Isolation**: Each build runs in a separate container, ensuring a clean environment.
+* 2. **Consistency**: Containers ensure consistent build environments across different stages.
+* 3. **Scalability**: Easily scale your build infrastructure by running multiple Docker containers as agents.
+
+* This approach leverages the power of Docker to enhance your CI/CD pipelines, providing flexibility and efficiency in your build and deployment processes.
+
+## 6. Write a dockerfile using a linux and a webserver ?
+
+* Sure! Below is a Dockerfile example that uses a Linux base image (specifically, Ubuntu) and sets up a simple web server using Nginx.
+
+### Dockerfile for a Linux-based Web Server
+
+```Dockerfile
+# Use an official Ubuntu as a parent image
+FROM ubuntu:latest
+
+# Set environment variables to non-interactive mode
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
+    nginx \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy custom configuration file from the current directory
+# to the appropriate location on the server
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy website files from the current directory to the web server's document root
+COPY html /var/www/html
+
+# Expose port 80 to the outside world
+EXPOSE 80
+
+# Start Nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### Explanation
+
+* 1. **Base Image**:
+   - `FROM ubuntu:latest`: This line specifies the base image, which is the latest version of Ubuntu.
+
+* 2. **Environment Variable**:
+   - `ENV DEBIAN_FRONTEND=noninteractive`: This line sets the environment variable to avoid any interactive prompts during package installation.
+
+* 3. **Install Nginx**:
+   - `RUN apt-get update && apt-get install -y nginx && apt-get clean && rm -rf /var/lib/apt/lists/*`: This line updates the package list, installs Nginx, cleans up the apt cache, and removes the package lists to reduce the image size.
+
+* 4. **Copy Configuration and Content**:
+   - `COPY nginx.conf /etc/nginx/nginx.conf`: This line copies a custom Nginx configuration file from your local machine to the container.
+   - `COPY html /var/www/html`: This line copies your website files (assuming they are in a local `html` directory) to the Nginx document root.
+
+* 5. **Expose Port**:
+   - `EXPOSE 80`: This line tells Docker that the container will listen on port 80 at runtime.
+
+* 6. **Start Nginx**:
+   - `CMD ["nginx", "-g", "daemon off;"]`: This line starts Nginx in the foreground so that it will not exit immediately after starting.
+
+### Custom Nginx Configuration (`nginx.conf`)
+
+* Here is a basic example of an `nginx.conf` file to be used with the Dockerfile:
+
+```nginx
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+    worker_connections 768;
+}
+
+http {
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    gzip on;
+    gzip_disable "msie6";
+
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+
+    server {
+        listen 80;
+        server_name localhost;
+
+        root /var/www/html;
+        index index.html index.htm;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
+```
+
+### Building and Running the Docker Image
+
+* 1. **Build the Docker Image**:
+
+   ```sh
+   docker build -t my-nginx-webserver .
+   ```
+
+* 2. **Run the Docker Container**:
+
+   ```sh
+   docker run -d -p 80:80 my-nginx-webserver
+   ```
+
+* 3. **Access the Web Server**:
+   - Open your browser and go to `http://localhost` (or the IP of your Docker host) to see your web server in action.
+
+* This setup uses Ubuntu and Nginx to create a simple web server running inside a Docker container. You can customize the Nginx configuration and HTML content to fit your specific requirements.
+
+## 7. What is Entrypoint vs CMD?
+
+* In Docker, both `ENTRYPOINT` and `CMD` are instructions used to specify what command should be run when a container starts. However, they serve different purposes and have distinct behaviors. Here's a detailed explanation of each, along with their differences and practical examples.
+
+### CMD
+
+- **Purpose**: Specifies the default command to run when the container starts.
+- **Syntax**: `CMD ["executable", "param1", "param2"]` or `CMD command param1 param2`
+- **Overridable**: Yes, the command can be overridden by providing a command at the end of the `docker run` command.
+- **Example Usage**:
+
+  ```Dockerfile
+  FROM ubuntu:latest
+  CMD ["echo", "Hello, World!"]
+  ```
+
+ * Running this container will execute the `echo` command:
+  
+  ```sh
+  docker run my-image
+  ```
+
+ * You can override `CMD`:
+
+  ```sh
+  docker run my-image echo "Hello, Docker!"
+  ```
+
+### ENTRYPOINT
+
+- **Purpose**: Configures a container to run as an executable.
+- **Syntax**: `ENTRYPOINT ["executable", "param1", "param2"]` or `ENTRYPOINT command param1 param2`
+- **Overridable**: Partially. Arguments can be appended, but the entrypoint command itself is not easily overridden without using the `--entrypoint` flag.
+- **Example Usage**:
+
+  ```Dockerfile
+  FROM ubuntu:latest
+  ENTRYPOINT ["echo"]
+  ```
+
+ * Running this container will execute the `echo` command with no arguments:
+  
+  ```sh
+  docker run my-image Hello, World!
+  ```
+
+ * The output will be:
+  
+  ```
+  Hello, World!
+  ```
+
+### Combined Usage
+
+* `ENTRYPOINT` and `CMD` can be used together to define both the executable and its default parameters. This combination allows you to define a default behavior while still allowing some level of customization.
+
+- **Example**:
+
+  ```Dockerfile
+  FROM ubuntu:latest
+  ENTRYPOINT ["echo"]
+  CMD ["Hello, World!"]
+  ```
+
+  * Running this container without arguments will use both `ENTRYPOINT` and `CMD`:
+
+  ```sh
+  docker run my-image
+  ```
+
+ * The output will be:
+  
+  ```
+  Hello, World!
+  ```
+
+ * Running the container with additional arguments will append them to `CMD`:
+
+  ```sh
+  docker run my-image "Hello, Docker!"
+  ```
+
+  The output will be:
+  
+  ```
+  Hello, Docker!
+  ```
+
+### Differences Summary
+
+- **CMD**:
+  - Defines default arguments for the entrypoint command.
+  - Can be easily overridden by providing a command at the end of `docker run`.
+  - Typically used for setting default commands.
+
+- **ENTRYPOINT**:
+  - Defines the executable to run when the container starts.
+  - Not easily overridden; the `--entrypoint` flag is required to change it.
+  - Used to configure containers as executables.
+
+### Practical Example
+
+* Here is a more practical example combining `ENTRYPOINT` and `CMD` to create a simple web server using Python:
+
+```Dockerfile
+# Use an official Python runtime as a parent image
+FROM python:3.8-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Make port 80 available to the world outside this container
+EXPOSE 80
+
+# Define the command to run the application
+ENTRYPOINT ["python"]
+
+# Define the default parameters for the ENTRYPOINT
+CMD ["app.py"]
+```
+
+* In this example:
+- `ENTRYPOINT ["python"]` ensures that Python is always used to run the application.
+- `CMD ["app.py"]` sets the default script to run, but this can be overridden at runtime if needed.
+
+* Running the container:
+
+```sh
+docker run -p 4000:80 my-python-app
+```
+
+* This will run `python app.py`.
+
+* Overriding the `CMD`:
+
+```sh
+docker run -p 4000:80 my-python-app another_script.py
+```
+
+* This will run `python another_script.py` instead of `app.py`.
+
+## 8. What is ADD vs COPY in Dockerfile
+
+* In a Dockerfile, both `ADD` and `COPY` instructions are used to copy files and directories from the host machine into the Docker image. However, they have some differences in functionality and usage. Here is a detailed comparison of `ADD` vs. `COPY`:
+
+### COPY
+
+- **Purpose**: Simply copies files and directories from the source (host machine) to the destination (Docker image).
+- **Syntax**: `COPY <source> <destination>`
+- **Features**:
+  - Copies files and directories as-is.
+  - Does not process the files in any way.
+  - Generally preferred for its simplicity and predictability.
+
+- **Example Usage**:
+
+  ```Dockerfile
+  # Use an official Ubuntu as a parent image
+  FROM ubuntu:latest
+
+  # Copy the local file `config.json` to `/app/config.json` in the image
+  COPY config.json /app/config.json
+
+  # Copy the local directory `src` to `/app/src` in the image
+  COPY src /app/src
+  ```
+
+### ADD
+
+- **Purpose**: Adds files, directories, or remote file URLs from the source to the destination.
+- **Syntax**: `ADD <source> <destination>`
+- **Features**:
+  - Supports copying local files and directories.
+  - Can automatically unpack compressed files (e.g., `.tar`, `.tar.gz`, `.zip`).
+  - Can download files from remote URLs and add them to the image.
+  - Has more capabilities but can be less predictable due to its additional features.
+
+- **Example Usage**:
+
+  ```Dockerfile
+  # Use an official Ubuntu as a parent image
+  FROM ubuntu:latest
+
+  # Add the local file `config.json` to `/app/config.json` in the image
+  ADD config.json /app/config.json
+
+  # Add the local directory `src` to `/app/src` in the image
+  ADD src /app/src
+
+  # Download a file from a remote URL and add it to `/app` in the image
+  ADD https://example.com/somefile.tar.gz /app/somefile.tar.gz
+
+  # Add and automatically extract a tar file
+  ADD archive.tar.gz /app/
+  ```
+
+### Differences Summary
+
+- **Functionality**:
+  - `COPY`: Simple and straightforward, copies files and directories.
+  - `ADD`: More versatile, supports additional features like extracting compressed files and downloading from URLs.
+
+- **Use Cases**:
+  - **COPY**: Preferred when you only need to copy files and directories without any additional processing.
+  - **ADD**: Useful when you need to extract compressed files or download files from a URL during the build process.
+
+### Best Practices
+
+- **Prefer COPY**: Use `COPY` for its simplicity and predictability when you just need to copy files and directories.
+- **Use ADD with Caution**: Use `ADD` only when you need its additional features (e.g., auto-extraction of archives, downloading files from URLs).
+
+### Practical Example
+
+* Here’s a practical Dockerfile example demonstrating the use of both `COPY` and `ADD`:
+
+```Dockerfile
+# Use an official Ubuntu as a parent image
+FROM ubuntu:latest
+
+# Set the working directory
+WORKDIR /app
+
+# Copy local files and directories to the container
+COPY config.json /app/config.json
+COPY src /app/src
+
+# Download a file from a remote URL and add it to the container
+ADD https://example.com/somefile.tar.gz /app/somefile.tar.gz
+
+# Automatically extract a tar file
+ADD archive.tar.gz /app/
+
+# Print the contents of the app directory (for verification)
+RUN ls -la /app
+```
+
+* In this example:
+- `COPY config.json /app/config.json` and `COPY src /app/src` copy local files and directories into the Docker image.
+- `ADD https://example.com/somefile.tar.gz /app/somefile.tar.gz` downloads a file from a URL and adds it to the image.
+- `ADD archive.tar.gz /app/` copies and extracts a tar file into the image.
+
+* Using `COPY` and `ADD` appropriately helps ensure your Dockerfile is efficient, maintainable, and predictable.
